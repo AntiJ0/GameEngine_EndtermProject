@@ -4,58 +4,55 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("이동 속도 관련")]
-    public float moveSpeed = 5f;           // 점수/배경/장애물용 속도
-    public float maxSpeed = 20f;
+    public float moveSpeed = 5f;
     public float speedIncreaseRate = 0.01f;
+    public float maxSpeed = 20f;
 
-    [Header("Y축 이동")]
-    public float verticalMoveSpeed = 5f;   // 실제 입력 반영 속도 (고정값)
-
-    [Header("체력 관련")]
-    public int maxHP = 3;
+    public int maxHP = 100;
     private int currentHP;
 
-    [Header("UI & 시각 효과")]
     public Image healthBarFill;
     public SpriteRenderer spriteRenderer;
     private Color originalColor;
 
-    [Header("애니메이션")]
     public Animator animator;
+
+    private enum ColorState { Normal, Red, Green, Yellow }
+    private ColorState currentColor = ColorState.Normal;
+
+    private bool hasShield = false;
+    public GameObject shieldEffectPrefab;
+    private GameObject shieldVisual;
+
+    private bool isYellowBuffActive = false;
+    private float yellowBuffEndTime = 0f;
 
     private void Start()
     {
         currentHP = maxHP;
         originalColor = spriteRenderer.color;
-
-        if (animator != null)
-            animator.SetBool("isRunning", true);
-
+        animator.SetBool("isRunning", true);
         UpdateHealthUI();
     }
 
     private void Update()
     {
-        // 위아래 이동
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 movement = Vector2.up * vertical * verticalMoveSpeed * Time.deltaTime;
-        transform.Translate(movement);
+        if (Time.timeScale == 0f) return;
 
-        // Y 위치 제한
+        float vertical = Input.GetAxisRaw("Vertical");
         Vector3 pos = transform.position;
+        pos.y += vertical * 5 * Time.deltaTime;
         pos.y = Mathf.Clamp(pos.y, -2.7f, 3.0f);
         transform.position = pos;
 
-        // 이동 속도 증가 (배경, 장애물, 점수용)
         moveSpeed += speedIncreaseRate * Time.deltaTime;
         moveSpeed = Mathf.Min(moveSpeed, maxSpeed);
 
-        // 속도 전달
         FindObjectOfType<ScoreManager>()?.SetSpeed(moveSpeed);
         FindObjectOfType<ObstacleSpawner>()?.SetPlayerSpeed(moveSpeed);
-        BackgroundLooper[] backgroundLoopers = FindObjectsOfType<BackgroundLooper>();
-        foreach (var looper in backgroundLoopers)
+        FindObjectOfType<ItemSpawner>()?.SetPlayerSpeed(moveSpeed);
+
+        foreach (var looper in FindObjectsOfType<BackgroundLooper>())
         {
             looper.SetScrollSpeed(moveSpeed);
         }
@@ -65,23 +62,26 @@ public class PlayerController : MonoBehaviour
     {
         if (other.CompareTag("Obstacle"))
         {
-            Destroy(other.gameObject);
-            currentHP--;
+            Obstacle obs = other.GetComponent<Obstacle>();
+            int damage = obs != null ? obs.GetDamage() : 20;
+
+            if (hasShield)
+            {
+                hasShield = false;
+                if (shieldVisual != null) Destroy(shieldVisual);
+                Destroy(other.gameObject);
+                return;
+            }
+
+            currentHP -= damage;
             UpdateHealthUI();
-            StartCoroutine(FlashRed());
+
+            StartCoroutine(ChangeColorTemporarily(Color.red, 0.5f, ColorState.Red));
+            Destroy(other.gameObject);
 
             if (currentHP <= 0)
-            {
-                FindObjectOfType<GameManager>()?.GameOver();
-            }
+                FindObjectOfType<GameManager>().GameOver();
         }
-    }
-
-    IEnumerator FlashRed()
-    {
-        spriteRenderer.color = Color.red;
-        yield return new WaitForSeconds(0.5f);
-        spriteRenderer.color = originalColor;
     }
 
     void UpdateHealthUI()
@@ -90,5 +90,73 @@ public class PlayerController : MonoBehaviour
         {
             healthBarFill.fillAmount = (float)currentHP / maxHP;
         }
+    }
+
+    IEnumerator ChangeColorTemporarily(Color tempColor, float duration, ColorState tempState)
+    {
+        currentColor = tempState;
+        spriteRenderer.color = tempColor;
+        yield return new WaitForSeconds(duration);
+
+        if (isYellowBuffActive && Time.time < yellowBuffEndTime)
+        {
+            spriteRenderer.color = Color.yellow;
+            currentColor = ColorState.Yellow;
+        }
+        else
+        {
+            spriteRenderer.color = originalColor;
+            currentColor = ColorState.Normal;
+        }
+    }
+
+    public void Heal(int amount)
+    {
+        currentHP = Mathf.Min(currentHP + amount, maxHP);
+        UpdateHealthUI();
+        StartCoroutine(ChangeColorTemporarily(new Color(0.5f, 1f, 0.5f), 0.5f, ColorState.Green));
+    }
+
+    public void GainShield()
+    {
+        if (hasShield) return;
+
+        hasShield = true;
+
+        if (shieldEffectPrefab != null)
+        {
+            shieldVisual = Instantiate(shieldEffectPrefab, transform);
+            shieldVisual.transform.localPosition = new Vector3(0.1f, 0.35f, 0f);
+        }
+    }
+
+    public void ActivateScoreBoost(float duration)
+    {
+        yellowBuffEndTime = Time.time + duration;
+        isYellowBuffActive = true;
+        currentColor = ColorState.Yellow;
+        spriteRenderer.color = Color.yellow;
+
+        FindObjectOfType<ScoreManager>().SetScoreMultiplier(1.5f);
+        StartCoroutine(EndScoreBoostAfter(duration));
+    }
+
+    IEnumerator EndScoreBoostAfter(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        isYellowBuffActive = false;
+
+        if (currentColor == ColorState.Yellow)
+        {
+            spriteRenderer.color = originalColor;
+            currentColor = ColorState.Normal;
+        }
+
+        FindObjectOfType<ScoreManager>().SetScoreMultiplier(1f);
+    }
+
+    public float GetMoveSpeed()
+    {
+        return moveSpeed;
     }
 }

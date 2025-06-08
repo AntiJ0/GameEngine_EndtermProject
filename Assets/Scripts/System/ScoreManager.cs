@@ -8,11 +8,12 @@ public class ScoreManager : MonoBehaviour
     public int currentScore = 0;
     public bool isGameOver = false;
 
-    public float playerSpeed = 5f; // PlayerController에서 가져와 덮어쓸 예정
+    private float playerSpeed = 5f; // PlayerController에서 매 프레임 전달
+    private float scoreMultiplier = 1f;
 
     private void Update()
     {
-        if (isGameOver) return;
+        if (isGameOver || Time.timeScale == 0f) return;
 
         score += playerSpeed * Time.deltaTime;
         currentScore = Mathf.FloorToInt(score);
@@ -32,5 +33,10 @@ public class ScoreManager : MonoBehaviour
     public void SetSpeed(float speed)
     {
         playerSpeed = speed;
+    }
+
+    public void SetScoreMultiplier(float multiplier)
+    {
+        scoreMultiplier = multiplier;
     }
 }

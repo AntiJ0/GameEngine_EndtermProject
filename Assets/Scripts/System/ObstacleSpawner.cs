@@ -1,53 +1,34 @@
-using System.Collections;
 using UnityEngine;
 
 public class ObstacleSpawner : MonoBehaviour
 {
     public GameObject obstaclePrefab;
+    public float minY = -2.5f;
+    public float maxY = 2.5f;
 
-    public float baseInterval = 3f;         // 기본 간격
-    public float referenceSpeed = 5f;       // 기준 속도
-    public float minInterval = 0.8f;        // 너무 빠르게 생성되는 것 방지
+    private float spawnInterval = 3f;
+    private float timer = 0f;
+    private float playerSpeed = 5f;
 
-    private float currentPlayerSpeed = 5f;  // Player에서 전달받을 실제 속도
-
-    private Camera mainCam;
-
-    private void Start()
+    private void Update()
     {
-        mainCam = Camera.main;
-        StartCoroutine(SpawnRoutine());
-    }
+        if (Time.timeScale == 0f) return;
+        timer += Time.deltaTime;
 
-    IEnumerator SpawnRoutine()
-    {
-        while (true)
+        if (timer >= spawnInterval)
         {
-            SpawnObstacle();
+            timer = 0f;
 
-            float interval = baseInterval * (referenceSpeed / currentPlayerSpeed);
-            interval = Mathf.Max(interval, minInterval); // 최소 간격 보장
+            Vector3 spawnPos = transform.position;
+            spawnPos.y = Random.Range(minY, maxY); 
 
-            yield return new WaitForSeconds(interval);
+            GameObject obs = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity);
         }
     }
 
     public void SetPlayerSpeed(float speed)
     {
-        currentPlayerSpeed = speed;
-    }
-
-    void SpawnObstacle()
-    {
-        Vector3 camRight = mainCam.ViewportToWorldPoint(new Vector3(1, 0.5f, 0));
-        float spawnX = camRight.x + 1f;
-        float spawnY = Random.Range(-2.7f, 3.0f);
-
-        Vector3 spawnPos = new Vector3(spawnX, spawnY, 0f);
-        GameObject newObstacle = Instantiate(obstaclePrefab, spawnPos, Quaternion.identity);
-
-        // 속도 전달
-        float moveSpeed = currentPlayerSpeed * 2f; // 플레이어 속도의 2배로 예시 설정
-        newObstacle.GetComponent<ObstacleMover>()?.SetSpeed(moveSpeed);
+        playerSpeed = speed;
+        spawnInterval = Mathf.Max(1f, 15f / speed);
     }
 }
