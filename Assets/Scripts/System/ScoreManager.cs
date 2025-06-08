@@ -15,7 +15,7 @@ public class ScoreManager : MonoBehaviour
     {
         if (isGameOver || Time.timeScale == 0f) return;
 
-        score += playerSpeed * Time.deltaTime;
+        score += playerSpeed * scoreMultiplier * Time.deltaTime;
         currentScore = Mathf.FloorToInt(score);
         scoreText.text = "Score: " + currentScore;
     }
