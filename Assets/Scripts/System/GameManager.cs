@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        scoreManager = FindObjectOfType<ScoreManager>();
         Time.timeScale = 1f;
         gameOverPanel.SetActive(false);
     }
@@ -24,6 +25,7 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
 
         int finalScore = scoreManager.GetFinalScore();
+        GoldManager.Instance.AddGold(finalScore);
         finalScoreText.text = $"Score: {finalScore}";
 
         // ¿˙¿Â

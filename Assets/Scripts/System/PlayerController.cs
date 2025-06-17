@@ -29,7 +29,16 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+        maxHP = 100 + UpgradeManager.Instance.healthLevel * 10;
         currentHP = maxHP;
+
+        int shieldCount = UpgradeManager.Instance.shieldLevel;
+        if (shieldCount > 0)
+        {
+            for (int i = 0; i < shieldCount; i++)
+                GainShield();
+        }
+
         originalColor = spriteRenderer.color;
         animator.SetBool("isRunning", true);
         UpdateHealthUI();
