@@ -31,12 +31,12 @@ public class PlayerController : MonoBehaviour
     {
         maxHP = 100 + UpgradeManager.Instance.healthLevel * 10;
         currentHP = maxHP;
+        Debug.Log(currentHP);
 
         int shieldCount = UpgradeManager.Instance.shieldLevel;
-        if (shieldCount > 0)
+        if (shieldCount == 1)
         {
-            for (int i = 0; i < shieldCount; i++)
-                GainShield();
+            GainShield();
         }
 
         originalColor = spriteRenderer.color;
@@ -90,6 +90,8 @@ public class PlayerController : MonoBehaviour
 
             if (currentHP <= 0)
                 FindObjectOfType<GameManager>().GameOver();
+
+            Debug.Log("Player hit! Damage: " + damage + ", CurrentHP(before): " + currentHP);
         }
     }
 

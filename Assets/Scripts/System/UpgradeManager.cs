@@ -18,21 +18,36 @@ public class UpgradeManager : MonoBehaviour
 
     [Header("Shield Upgrade")]
     public int shieldLevel = 0;
-    public int maxShieldLevel = 2;
-    public int[] shieldUpgradeCosts = new int[2];
+    public int maxShieldLevel = 1;
+    public int[] shieldUpgradeCosts = new int[1];
 
-    [Header("UI")]
+    [Header("UI - Cost Display")]
+    public TextMeshProUGUI healthCostText;
+    public TextMeshProUGUI goldBoostCostText;
+    public TextMeshProUGUI shieldCostText;
+
+    [Header("UI - 알림")]
     public TextMeshProUGUI notEnoughGoldText;
 
     private void Awake()
     {
+        PlayerPrefs.DeleteAll(); 
+        PlayerPrefs.Save();
+
         if (Instance == null)
             Instance = this;
         else
             Destroy(gameObject);
 
+        LoadUpgrades();
+
         if (notEnoughGoldText != null)
             notEnoughGoldText.gameObject.SetActive(false);
+    }
+
+    private void Start()
+    {
+        UpdateUpgradeCostUI();
     }
 
     public void UpgradeHealth()
@@ -43,6 +58,8 @@ public class UpgradeManager : MonoBehaviour
         if (GoldManager.Instance.TrySpendGold(cost))
         {
             healthLevel++;
+            SaveUpgrades();
+            UpdateUpgradeCostUI();
         }
         else
         {
@@ -58,6 +75,8 @@ public class UpgradeManager : MonoBehaviour
         if (GoldManager.Instance.TrySpendGold(cost))
         {
             goldBoostLevel++;
+            SaveUpgrades();
+            UpdateUpgradeCostUI();
         }
         else
         {
@@ -73,6 +92,8 @@ public class UpgradeManager : MonoBehaviour
         if (GoldManager.Instance.TrySpendGold(cost))
         {
             shieldLevel++;
+            SaveUpgrades();
+            UpdateUpgradeCostUI();
         }
         else
         {
@@ -80,9 +101,38 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
+    private void UpdateUpgradeCostUI()
+    {
+        if (healthCostText != null)
+        {
+            if (healthLevel < maxHealthLevel)
+                healthCostText.text = $"{healthUpgradeCosts[healthLevel]}골드";
+            else
+                healthCostText.text = "Max";
+        }
+
+        if (goldBoostCostText != null)
+        {
+            if (goldBoostLevel < maxGoldBoostLevel)
+                goldBoostCostText.text = $"{goldBoostUpgradeCosts[goldBoostLevel]}골드";
+            else
+                goldBoostCostText.text = "Max";
+        }
+
+        if (shieldCostText != null)
+        {
+            if (shieldLevel < maxShieldLevel)
+                shieldCostText.text = $"{shieldUpgradeCosts[shieldLevel]}골드";
+            else
+                shieldCostText.text = "Max";
+        }
+    }
+
     private void ShowNotEnoughGold()
     {
         if (notEnoughGoldText == null) return;
+
+        notEnoughGoldText.gameObject.SetActive(false);
         StopAllCoroutines(); // 중복 방지
         StartCoroutine(ShowTextTemporarily());
     }
@@ -92,5 +142,26 @@ public class UpgradeManager : MonoBehaviour
         notEnoughGoldText.gameObject.SetActive(true);
         yield return new WaitForSeconds(1.5f);
         notEnoughGoldText.gameObject.SetActive(false);
+    }
+
+    private void SaveUpgrades()
+    {
+        PlayerPrefs.SetInt("HealthLevel", healthLevel);
+        PlayerPrefs.SetInt("GoldBoostLevel", goldBoostLevel);
+        PlayerPrefs.SetInt("ShieldLevel", shieldLevel);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadUpgrades()
+    {
+        healthLevel = PlayerPrefs.GetInt("HealthLevel", 0);
+        goldBoostLevel = PlayerPrefs.GetInt("GoldBoostLevel", 0);
+        shieldLevel = PlayerPrefs.GetInt("ShieldLevel", 0);
+    }
+
+    // 필요 시 현재 골드 배율 확인 함수
+    public float GetCurrentGoldBoostMultiplier()
+    {
+        return 1f + goldBoostLevel * 0.1f;
     }
 }

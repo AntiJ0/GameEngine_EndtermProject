@@ -25,7 +25,6 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
 
         int finalScore = scoreManager.GetFinalScore();
-        GoldManager.Instance.AddGold(finalScore);
         finalScoreText.text = $"Score: {finalScore}";
 
         // ¿˙¿Â

@@ -22,6 +22,8 @@ public class Obstacle : MonoBehaviour
             // Á¶Á¤
             transform.localScale = baseScale * scaleMultiplier;
             baseDamage = Mathf.RoundToInt(20 * scaleMultiplier);
+
+            Debug.Log("Generated Obstacle damage: " + baseDamage);
         }
     }
 
