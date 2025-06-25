@@ -10,7 +10,6 @@ public class PauseManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             if (!isPaused) PauseGame();
-            else ResumeGame();
         }
     }
 
