@@ -26,9 +26,6 @@ public class UpgradeManager : MonoBehaviour
     public TextMeshProUGUI goldBoostCostText;
     public TextMeshProUGUI shieldCostText;
 
-    [Header("UI - 알림")]
-    public TextMeshProUGUI notEnoughGoldText;
-
     private void Awake()
     {
         if (Instance == null)
@@ -37,9 +34,6 @@ public class UpgradeManager : MonoBehaviour
             Destroy(gameObject);
 
         LoadUpgrades();
-
-        if (notEnoughGoldText != null)
-            notEnoughGoldText.gameObject.SetActive(false);
     }
 
     private void Start()
@@ -58,10 +52,6 @@ public class UpgradeManager : MonoBehaviour
             SaveUpgrades();
             UpdateUpgradeCostUI();
         }
-        else
-        {
-            ShowNotEnoughGold();
-        }
     }
 
     public void UpgradeGoldBoost()
@@ -75,10 +65,6 @@ public class UpgradeManager : MonoBehaviour
             SaveUpgrades();
             UpdateUpgradeCostUI();
         }
-        else
-        {
-            ShowNotEnoughGold();
-        }
     }
 
     public void UpgradeShield()
@@ -91,10 +77,6 @@ public class UpgradeManager : MonoBehaviour
             shieldLevel++;
             SaveUpgrades();
             UpdateUpgradeCostUI();
-        }
-        else
-        {
-            ShowNotEnoughGold();
         }
     }
 
@@ -123,22 +105,6 @@ public class UpgradeManager : MonoBehaviour
             else
                 shieldCostText.text = "Max";
         }
-    }
-
-    private void ShowNotEnoughGold()
-    {
-        if (notEnoughGoldText == null) return;
-
-        notEnoughGoldText.gameObject.SetActive(false);
-        StopAllCoroutines(); // 중복 방지
-        StartCoroutine(ShowTextTemporarily());
-    }
-
-    private IEnumerator ShowTextTemporarily()
-    {
-        notEnoughGoldText.gameObject.SetActive(true);
-        yield return new WaitForSeconds(1.5f);
-        notEnoughGoldText.gameObject.SetActive(false);
     }
 
     private void SaveUpgrades()
